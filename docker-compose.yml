@@ -1,0 +1,44 @@
+version: '3.8'
+services:
+  mysqldb:
+    container_name: mysql_db
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: Sujith@1234
+      MYSQL_DATABASE: myblogapp
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  springboot-blog-webapp:
+    container_name: springboot-blog-webapp
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    networks:
+      - app-network
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql_db:3306/myblogapp?useSSL=false&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: Sujith@1234
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on:
+      mysqldb:
+        condition: service_healthy
+
+    restart: on-failure
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  mysql_data:
